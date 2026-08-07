@@ -1,0 +1,85 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-08-07T13:50:36.112Z",
+  "activeFeatures": [
+    "staygraf-mvp"
+  ],
+  "primaryFeature": "staygraf-mvp",
+  "features": {
+    "staygraf-mvp": {
+      "phase": "check",
+      "matchRate": null,
+      "iterationCount": 1,
+      "documents": {},
+      "taskChain": [
+        {
+          "phase": "plan",
+          "status": "completed",
+          "createdAt": "2026-08-07T12:51:09.837Z",
+          "completedAt": "2026-08-07T12:54:04.175Z"
+        },
+        {
+          "phase": "design",
+          "status": "active",
+          "createdAt": "2026-08-07T12:51:09.837Z"
+        },
+        {
+          "phase": "do",
+          "status": "pending",
+          "createdAt": "2026-08-07T12:51:09.837Z"
+        },
+        {
+          "phase": "check",
+          "status": "pending",
+          "createdAt": "2026-08-07T12:51:09.837Z"
+        },
+        {
+          "phase": "report",
+          "status": "pending",
+          "createdAt": "2026-08-07T12:51:09.837Z"
+        }
+      ],
+      "timestamps": {
+        "started": "2026-08-07T12:51:09.837Z",
+        "lastUpdated": "2026-08-07T12:54:04.175Z"
+      }
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Starter",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-08-07T12:51:09.835Z",
+    "onboardingCompleted": false,
+    "lastActivity": "2026-08-07T13:50:36.112Z"
+  },
+  "history": [
+    {
+      "feature": "staygraf-mvp",
+      "from": "plan",
+      "to": "design",
+      "timestamp": "2026-08-07T12:54:04.173Z"
+    },
+    {
+      "feature": "staygraf-mvp",
+      "action": "phase_complete",
+      "phase": "plan",
+      "nextPhase": "design",
+      "timestamp": "2026-08-07T12:54:04.174Z"
+    },
+    {
+      "feature": "staygraf-mvp",
+      "from": "design",
+      "to": "design",
+      "timestamp": "2026-08-07T12:57:41.112Z"
+    },
+    {
+      "feature": "staygraf-mvp",
+      "from": "design",
+      "to": "design",
+      "timestamp": "2026-08-07T13:34:11.598Z"
+    }
+  ]
+}
