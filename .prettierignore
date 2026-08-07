@@ -1,0 +1,12 @@
+.agents
+.bkit
+.bkit-codex
+.codex
+.next
+AGENTS.md
+coverage
+docs
+node_modules
+playwright-report
+pnpm-lock.yaml
+test-results

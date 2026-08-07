@@ -1,0 +1,24 @@
+{
+  "name": "staygraf",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @staygraf/web dev",
+    "build": "pnpm --filter @staygraf/web build",
+    "lint": "pnpm --filter @staygraf/web lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @staygraf/web typecheck",
+    "test": "pnpm --filter @staygraf/web test",
+    "test:e2e": "pnpm --filter @staygraf/web test:e2e"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "0.8.1"
+  }
+}

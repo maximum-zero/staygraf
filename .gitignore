@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# tests
+coverage/
+playwright-report/
+test-results/
+
+# local environment
+.env
+.env.*
+!.env.example
+
+# caches and logs
+*.log
+.eslintcache
+.turbo/
+*.tsbuildinfo
+
+# editor and operating system
+.DS_Store
+.idea/
+.vscode/
+
+# local agent and generated artifacts
+.codex/
+/.agents/
+/.bkit/
+/.bkit-codex/
