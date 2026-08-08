@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import "pretendard/dist/web/variable/pretendardvariable.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );
