@@ -2,7 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Graf } from "@/features/catalog/sample-data";
 
-export function GrafCard({ graf }: { graf: Graf }) {
+export function GrafCard({
+  graf,
+  priority = false,
+}: {
+  graf: Graf;
+  priority?: boolean;
+}) {
   return (
     <article className="graf-card">
       <Link href={`/graf/${graf.slug}`} className="graf-card__image">
@@ -10,6 +16,7 @@ export function GrafCard({ graf }: { graf: Graf }) {
           src={graf.image}
           alt={graf.alt}
           fill
+          priority={priority}
           sizes="(max-width: 760px) 100vw, 33vw"
         />
       </Link>
@@ -20,12 +27,6 @@ export function GrafCard({ graf }: { graf: Graf }) {
         <p className="graf-card__meta">
           {graf.spaceType} · {graf.area}
         </p>
-        <div className="contractor">
-          <span className="contractor__avatar" aria-hidden="true">
-            {graf.contractorInitial}
-          </span>
-          <span>{graf.contractor}</span>
-        </div>
       </div>
     </article>
   );

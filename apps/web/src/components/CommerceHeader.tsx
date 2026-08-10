@@ -117,7 +117,7 @@ export function CommerceHeader() {
           STAYGRAF
         </Link>
         <nav className="primary-nav" aria-label="주요 메뉴">
-          <Link href="/#graf">GRAF</Link>
+          <Link href="/graf">GRAF</Link>
           <div
             ref={shopMenu}
             className="shop-menu"
@@ -218,7 +218,7 @@ export function CommerceHeader() {
             className="mobile-commerce-menu__primary"
             aria-label="모바일 주요 메뉴"
           >
-            <Link href="/#graf" onClick={() => setIsMobileOpen(false)}>
+            <Link href="/graf" onClick={() => setIsMobileOpen(false)}>
               GRAF
             </Link>
             <Link href="/#products" onClick={() => setIsMobileOpen(false)}>

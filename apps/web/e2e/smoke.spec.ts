@@ -1,25 +1,94 @@
 import { expect, test } from "@playwright/test";
 
-test("홈에서 GRAF 상세와 연결 상품을 탐색한다", async ({ page }) => {
+test("GRAF 목록에서 상세와 연결 상품을 탐색한다", async ({ page }) => {
   await page.goto("/");
 
   await expect(
     page.getByRole("heading", { name: /공간에서 발견한 자재를/ }),
   ).toBeVisible();
+  await page.getByRole("link", { name: "GRAF", exact: true }).click();
+  await expect(page).toHaveURL(/\/graf$/);
+  await expect(page.getByText("3개의 공간")).toBeVisible();
+  await expect(page.getByText("스튜디오 모노")).toHaveCount(0);
+
+  await page.getByRole("button", { name: /공간 유형/ }).click();
+  await page
+    .getByRole("dialog", { name: "공간 유형 선택" })
+    .getByRole("button", { name: "욕실", exact: true })
+    .click();
+  await expect(page.getByText("1개의 공간")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "모래빛 질감으로 정돈한 배스" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /욕실/ }).click();
+  await page
+    .getByRole("dialog", { name: "공간 유형 선택" })
+    .getByRole("button", { name: "전체", exact: true })
+    .click();
+
   await page.getByRole("link", { name: "빛이 오래 머무는 스톤 리빙" }).click();
   await expect(
     page.getByRole("heading", { name: "빛이 오래 머무는 스톤 리빙" }),
   ).toBeVisible();
+  await expect(page.locator(".graf-scene")).toHaveCount(3);
+  await expect(page.locator(".graf-scene--portrait")).toHaveCount(1);
+  await expect(
+    page.locator(".graf-detail__facts dt").filter({ hasText: "주거 유형" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".graf-detail__facts dd").filter({ hasText: "아파트" }),
+  ).toBeVisible();
+  await expect(page.getByText("공간 이야기")).toHaveCount(0);
 
   await page
     .getByRole("button", { name: "아이보리 트래버틴 빅슬랩 보기" })
+    .first()
     .click();
-  await expect(
-    page.getByRole("heading", { name: "아이보리 트래버틴 빅슬랩" }),
-  ).toBeVisible();
+  await expect(page.locator(".marker-preview")).toContainText(
+    "아이보리 트래버틴 빅슬랩",
+  );
+  await expect(page.locator(".marker-preview")).toHaveCSS(
+    "position",
+    "absolute",
+  );
 
+  await expect(page.getByText("이 사진에 연결된 상품").first()).toBeVisible();
+  await page.locator(".graf-scene").last().scrollIntoViewIfNeeded();
   await page.getByRole("button", { name: /사용 상품 3/ }).click();
   await expect(page.getByRole("dialog", { name: "사용 상품 3" })).toBeVisible();
+  await page.getByRole("button", { name: "전체 사용 상품 닫기" }).click();
+  await expect(
+    page.getByRole("heading", { name: "다른 공간 둘러보기" }),
+  ).toBeVisible();
+});
+
+test("GRAF 목록과 상세는 주요 화면 너비에서 가로로 깨지지 않는다", async ({
+  page,
+}) => {
+  for (const path of ["/graf", "/graf/warm-stone-living"]) {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 900 },
+      { width: 1440, height: 1000 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(path, { waitUntil: "domcontentloaded" });
+      const overflow = await page.evaluate(() => ({
+        hasOverflow: document.documentElement.scrollWidth > window.innerWidth,
+        offenders: Array.from(document.querySelectorAll<HTMLElement>("body *"))
+          .filter(
+            (element) =>
+              element.getBoundingClientRect().right > window.innerWidth + 1,
+          )
+          .slice(0, 5)
+          .map((element) => `${element.tagName}.${element.className}`),
+      }));
+      expect(
+        overflow.hasOverflow,
+        `${path} ${viewport.width}px 가로 스크롤: ${overflow.offenders.join(", ")}`,
+      ).toBe(false);
+    }
+  }
 });
 
 test("홈에서 SHOP 세부 메뉴와 상품 옵션을 탐색한다", async ({ page }) => {

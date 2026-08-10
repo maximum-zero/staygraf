@@ -28,6 +28,21 @@ export type Graf = {
   image: string;
   alt: string;
   products: Product[];
+  scenes: GrafScene[];
+};
+
+export type GrafScene = {
+  id: string;
+  image: string;
+  width: number;
+  height: number;
+  alt: string;
+  caption: string;
+  markers: Array<{
+    productId: string;
+    left: string;
+    top: string;
+  }>;
 };
 
 export const products: Product[] = [
@@ -135,6 +150,41 @@ export const grafs: Graf[] = [
     image: "/images/pilots/graf-01-living.png",
     alt: "자연광이 드는 따뜻한 석재 마감의 현대적인 거실",
     products: [products[0], products[3], products[4]],
+    scenes: [
+      {
+        id: "living-wide",
+        image: "/images/pilots/graf-01-living.png",
+        width: 1536,
+        height: 1024,
+        alt: "자연광이 드는 따뜻한 석재 마감의 현대적인 거실 전체",
+        caption: "거실에서 다이닝까지 이어지는 석재 바닥과 낮은 가구의 균형",
+        markers: [
+          { productId: "terra-line-ivory", left: "54%", top: "76%" },
+          { productId: "orb-pendant-250", left: "73%", top: "29%" },
+        ],
+      },
+      {
+        id: "living-detail",
+        image: "/images/pilots/graf-01-living-detail.png",
+        width: 1536,
+        height: 1024,
+        alt: "곡선형 소파와 오크 수납, 오팔 펜던트를 가까이 담은 거실",
+        caption: "부드러운 곡선과 오크, 빛의 온도를 맞춘 생활 공간",
+        markers: [{ productId: "line-03-pendant", left: "61%", top: "22%" }],
+      },
+      {
+        id: "living-portrait",
+        image: "/images/pilots/graf-01-living-portrait.png",
+        width: 1122,
+        height: 1402,
+        alt: "석재 바닥과 곡선형 소파, 오팔 펜던트를 세로 구도로 담은 거실",
+        caption: "공간의 높이와 바닥 재료를 함께 담은 세로 시공 사진",
+        markers: [
+          { productId: "terra-line-ivory", left: "65%", top: "76%" },
+          { productId: "orb-pendant-250", left: "84%", top: "31%" },
+        ],
+      },
+    ],
   },
   {
     slug: "quiet-sand-bath",
@@ -148,6 +198,29 @@ export const grafs: Graf[] = [
     image: "/images/pilots/graf-02-bathroom.png",
     alt: "베이지 타일과 브론즈 수전으로 마감한 욕실",
     products: [products[0], products[1]],
+    scenes: [
+      {
+        id: "bath-wide",
+        image: "/images/pilots/graf-02-bathroom.png",
+        width: 1536,
+        height: 1024,
+        alt: "베이지 타일과 브론즈 수전으로 마감한 욕실 전체",
+        caption: "큰 면의 타일과 브론즈 금속을 절제해 배치한 욕실",
+        markers: [
+          { productId: "terra-line-ivory", left: "58%", top: "31%" },
+          { productId: "arc-basin-120", left: "73%", top: "55%" },
+        ],
+      },
+      {
+        id: "bath-detail",
+        image: "/images/pilots/graf-02-bathroom-detail.png",
+        width: 1536,
+        height: 1024,
+        alt: "베이지 타일과 브론즈 수전의 질감을 가까이 담은 욕실",
+        caption: "타일 줄눈과 금속 마감이 만나는 세면 공간의 디테일",
+        markers: [{ productId: "arc-basin-120", left: "84%", top: "56%" }],
+      },
+    ],
   },
   {
     slug: "soft-metal-kitchen",
@@ -161,6 +234,29 @@ export const grafs: Graf[] = [
     image: "/images/pilots/graf-03-kitchen.png",
     alt: "오크 수납장과 스테인리스 수전이 있는 밝은 주방",
     products: [products[2], products[3]],
+    scenes: [
+      {
+        id: "kitchen-wide",
+        image: "/images/pilots/graf-03-kitchen.png",
+        width: 1537,
+        height: 1023,
+        alt: "오크 수납장과 스테인리스 수전이 있는 밝은 주방 전체",
+        caption: "오크 수납과 차가운 금속을 자연광으로 부드럽게 연결한 주방",
+        markers: [
+          { productId: "flow-kitchen-420", left: "48%", top: "54%" },
+          { productId: "orb-pendant-250", left: "55%", top: "13%" },
+        ],
+      },
+      {
+        id: "kitchen-detail",
+        image: "/images/pilots/graf-03-kitchen-detail.png",
+        width: 1537,
+        height: 1023,
+        alt: "석재 아일랜드와 스틸 수전, 오크 수납을 가까이 담은 주방",
+        caption: "자주 닿는 수전과 작업대의 재료감을 가까이서 확인한 장면",
+        markers: [{ productId: "flow-kitchen-420", left: "67%", top: "55%" }],
+      },
+    ],
   },
 ];
 
