@@ -98,7 +98,7 @@ test("홈에서 SHOP 세부 메뉴와 상품 옵션을 탐색한다", async ({ p
   await expect(
     page.getByRole("group", { name: "SHOP 세부 카테고리" }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "세면 수전" })).toBeVisible();
+  await expect(page.getByText("세면 수전", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "실버 이미지 보기" }).click();
   await expect(page.getByAltText("실버 트래버틴 옵션")).toBeVisible();
@@ -142,7 +142,7 @@ test("SHOP 메뉴는 키보드 순서와 닫힘 동작을 지킨다", async ({ p
   await page.getByRole("link", { name: "GRAF", exact: true }).focus();
   await shop.focus();
   await expect(panel).toBeVisible();
-  for (let index = 0; index < 12; index += 1) {
+  for (let index = 0; index < 4; index += 1) {
     await page.keyboard.press("Tab");
   }
   await expect(page.getByRole("button", { name: "검색" })).toBeFocused();
@@ -178,11 +178,11 @@ test("모바일 메뉴에서 SHOP으로 이동한다", async ({ page }) => {
   await expect(
     mobileMenu.getByRole("link", { name: "GRAF", exact: true }),
   ).toBeVisible();
-  const shopLink = mobileMenu.getByRole("link", {
+  const shopButton = mobileMenu.getByRole("button", {
     name: "SHOP",
     exact: true,
   });
-  await expect(shopLink).toBeVisible();
+  await expect(shopButton).toBeVisible();
   await expect(mobileMenu.getByRole("link", { name: "타일" })).toHaveCount(0);
   await expect
     .poll(() => page.evaluate(() => document.documentElement.style.overflow))
@@ -199,19 +199,99 @@ test("모바일 메뉴에서 SHOP으로 이동한다", async ({ page }) => {
     page.getByRole("button", { name: "전체 메뉴 닫기" }),
   ).toBeFocused();
   await page.keyboard.press("Shift+Tab");
-  await expect(shopLink).toBeFocused();
+  await expect(shopButton).toBeFocused();
 
-  await shopLink.click();
-  await expect(page.locator("#products")).toBeInViewport();
-  await expect
-    .poll(() =>
-      page
-        .locator("#products")
-        .evaluate((element) => element.getBoundingClientRect().top),
-    )
-    .toBeGreaterThanOrEqual(62);
+  await shopButton.click();
+  const tileLink = mobileMenu.getByRole("link", {
+    name: "타일",
+    exact: true,
+  });
+  await expect(tileLink).toBeVisible();
+  await tileLink.click();
+  await expect(page).toHaveURL(/\/shop\/tile\?type=tile$/);
+  await expect(page.locator("#catalog-title")).toContainText("타일 타일 상품");
   await expect(mobileMenu).not.toBeVisible();
   await expect
     .poll(() => page.evaluate(() => document.documentElement.style.overflow))
     .toBe("");
+});
+
+test("상품 목록에서 카테고리와 필터 조건을 탐색한다", async ({ page }) => {
+  await page.goto("/shop/tile?type=tile");
+
+  await expect(page.locator("#catalog-title")).toContainText("타일 타일 상품");
+  await expect(page.getByText("8개의 상품")).toBeVisible();
+  const firstOptions = page
+    .locator(".catalog-card")
+    .filter({ hasText: "트래버틴 아이보리 포세린 타일" })
+    .locator(".catalog-card__options");
+  await expect(firstOptions.getByRole("button")).toHaveCount(4);
+  await expect(firstOptions.getByText("+2", { exact: true })).toBeVisible();
+  expect(
+    await firstOptions.evaluate(
+      (options) => options.scrollWidth > options.clientWidth,
+    ),
+  ).toBe(false);
+
+  await page.getByRole("button", { name: /^필터/ }).click();
+  const filter = page.getByRole("dialog", { name: "필터" });
+  await expect(filter).toBeVisible();
+  await filter.getByRole("button", { name: "스타일" }).click();
+  await expect(filter.getByRole("group", { name: "스타일" })).toBeVisible();
+  await filter.getByText("포세린", { exact: true }).click();
+  await filter.getByRole("button", { name: /개 상품 보기/ }).click();
+
+  await expect(page).toHaveURL(/styles=%ED%8F%AC%EC%84%B8%EB%A6%B0/);
+  await expect(page.getByRole("button", { name: /포세린/ })).toBeVisible();
+
+  await page
+    .getByRole("complementary", { name: "상품 카테고리" })
+    .getByRole("link", { name: "빅슬랩", exact: true })
+    .click();
+  await expect(page).toHaveURL(/type=big-slab/);
+  await expect(page.getByText("4개의 상품")).toBeVisible();
+});
+
+test("상품 목록은 주요 화면 너비에서 가로로 깨지지 않는다", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 320, height: 844, columns: 1 },
+    { width: 375, height: 844, columns: 1 },
+    { width: 414, height: 844, columns: 1 },
+    { width: 479, height: 844, columns: 1 },
+    { width: 480, height: 844, columns: 1 },
+    { width: 539, height: 844, columns: 1 },
+    { width: 540, height: 844, columns: 2 },
+    { width: 620, height: 844, columns: 2 },
+    { width: 621, height: 844, columns: 2 },
+    { width: 767, height: 900, columns: 2 },
+    { width: 768, height: 900, columns: 3 },
+    { width: 1023, height: 900, columns: 3 },
+    { width: 1024, height: 900, columns: 4 },
+    { width: 1239, height: 1000, columns: 4 },
+    { width: 1240, height: 1000, columns: 4 },
+    { width: 1440, height: 1000, columns: 4 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/shop/tile?type=tile");
+    await expect(page.locator("#catalog-title")).toContainText(
+      "타일 타일 상품",
+    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth,
+      ),
+    ).toBe(false);
+    await expect
+      .poll(() =>
+        page
+          .locator(".catalog-grid")
+          .evaluate(
+            (grid) =>
+              getComputedStyle(grid).gridTemplateColumns.split(" ").length,
+          ),
+      )
+      .toBe(viewport.columns);
+  }
 });

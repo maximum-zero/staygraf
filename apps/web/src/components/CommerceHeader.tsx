@@ -1,18 +1,26 @@
 "use client";
 
-import { Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Menu,
+  Search,
+  ShoppingBag,
+  UserRound,
+  X,
+} from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-
-const SHOP_CATEGORIES = [
-  { title: "타일", items: ["타일", "빅슬랩"] },
-  { title: "수전", items: ["세면 수전", "주방 수전", "샤워·욕조 수전"] },
-  { title: "조명", items: ["펜던트 조명", "천장 조명", "벽 조명"] },
-] as const;
+import { SHOP_CATEGORIES } from "@/features/catalog/category-tree";
 
 export function CommerceHeader() {
+  const pathname = usePathname();
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
+  const [mobileCategoryOpen, setMobileCategoryOpen] = useState("타일");
+  const [currentTileType, setCurrentTileType] = useState("tile");
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const header = useRef<HTMLElement>(null);
   const shopMenu = useRef<HTMLDivElement>(null);
@@ -72,14 +80,14 @@ export function CommerceHeader() {
     background.forEach((element) => {
       element.inert = true;
     });
-    mobileMenu.current?.querySelector<HTMLAnchorElement>("a")?.focus();
+    mobileMenu.current?.querySelector<HTMLElement>("a, button")?.focus();
 
     const containFocus = (event: KeyboardEvent) => {
       if (event.key !== "Tab") return;
       const focusable: HTMLElement[] = [
         ...(menuButton ? [menuButton] : []),
         ...Array.from(
-          mobileMenu.current?.querySelectorAll<HTMLAnchorElement>("a") ?? [],
+          mobileMenu.current?.querySelectorAll<HTMLElement>("a, button") ?? [],
         ),
       ];
       const first = focusable[0];
@@ -132,7 +140,7 @@ export function CommerceHeader() {
             <Link
               ref={shopTrigger}
               className={isShopOpen ? "shop-trigger is-active" : "shop-trigger"}
-              href="/#products"
+              href="/shop/tile?type=tile"
               aria-expanded={isShopOpen}
               aria-controls="shop-reveal"
               onFocus={openShop}
@@ -165,13 +173,23 @@ export function CommerceHeader() {
               >
                 {SHOP_CATEGORIES.map((category) => (
                   <div key={category.title}>
-                    <Link className="shop-reveal__title" href="/#products">
-                      {category.title}
-                    </Link>
+                    {category.href ? (
+                      <Link className="shop-reveal__title" href={category.href}>
+                        {category.title}
+                      </Link>
+                    ) : (
+                      <span className="shop-reveal__title is-unavailable">
+                        {category.title}
+                      </span>
+                    )}
                     <ul>
                       {category.items.map((item) => (
-                        <li key={item}>
-                          <Link href="/#products">{item}</Link>
+                        <li key={item.label}>
+                          {item.href ? (
+                            <Link href={item.href}>{item.label}</Link>
+                          ) : (
+                            <span aria-disabled="true">{item.label}</span>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -198,7 +216,20 @@ export function CommerceHeader() {
             aria-label={isMobileOpen ? "전체 메뉴 닫기" : "전체 메뉴"}
             aria-expanded={isMobileOpen}
             aria-controls="mobile-commerce-menu"
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
+            onClick={() => {
+              const willOpen = !isMobileOpen;
+              setIsMobileOpen(willOpen);
+              if (willOpen && pathname.startsWith("/shop/")) {
+                setIsMobileShopOpen(true);
+                setMobileCategoryOpen("타일");
+                setCurrentTileType(
+                  new URLSearchParams(window.location.search).get("type") ===
+                    "big-slab"
+                    ? "big-slab"
+                    : "tile",
+                );
+              }
+            }}
           >
             {isMobileOpen ? <X size={21} /> : <Menu size={21} />}
           </button>
@@ -221,9 +252,77 @@ export function CommerceHeader() {
             <Link href="/graf" onClick={() => setIsMobileOpen(false)}>
               GRAF
             </Link>
-            <Link href="/#products" onClick={() => setIsMobileOpen(false)}>
+            <button
+              className="mobile-commerce-menu__shop-trigger"
+              type="button"
+              aria-expanded={isMobileShopOpen}
+              aria-controls="mobile-shop-categories"
+              onClick={() => setIsMobileShopOpen((open) => !open)}
+            >
               SHOP
-            </Link>
+              <ChevronDown size={20} aria-hidden="true" />
+            </button>
+            {isMobileShopOpen && (
+              <div
+                className="mobile-shop-categories"
+                id="mobile-shop-categories"
+              >
+                <p>상품 카테고리</p>
+                {SHOP_CATEGORIES.map((category) => {
+                  const isOpen = mobileCategoryOpen === category.title;
+                  return (
+                    <div key={category.title}>
+                      <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        onClick={() =>
+                          setMobileCategoryOpen(isOpen ? "" : category.title)
+                        }
+                      >
+                        {category.title}
+                        <ChevronRight size={18} aria-hidden="true" />
+                      </button>
+                      {isOpen && (
+                        <ul>
+                          {category.items.map((item) => (
+                            <li key={item.label}>
+                              {item.href ? (
+                                <Link
+                                  className={
+                                    category.title === "타일" &&
+                                    ((currentTileType === "tile" &&
+                                      item.label === "타일") ||
+                                      (currentTileType === "big-slab" &&
+                                        item.label === "빅슬랩"))
+                                      ? "is-current"
+                                      : ""
+                                  }
+                                  href={item.href}
+                                  aria-current={
+                                    category.title === "타일" &&
+                                    ((currentTileType === "tile" &&
+                                      item.label === "타일") ||
+                                      (currentTileType === "big-slab" &&
+                                        item.label === "빅슬랩"))
+                                      ? "page"
+                                      : undefined
+                                  }
+                                  onClick={() => setIsMobileOpen(false)}
+                                >
+                                  {item.label}
+                                </Link>
+                              ) : (
+                                <span aria-disabled="true">{item.label}</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </nav>
         </div>
       )}
