@@ -11,12 +11,24 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { SHOP_CATEGORIES } from "@/features/catalog/category-tree";
+import { useCartStore } from "@/features/cart/cart-store";
+
+const subscribeToMount = () => () => undefined;
+const getClientMountSnapshot = () => true;
+const getServerMountSnapshot = () => false;
 
 export function CommerceHeader() {
   const pathname = usePathname();
+  const cartCount = useCartStore((state) => state.bundles.length);
+  const cartHydrated = useCartStore((state) => state.hydrated);
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    getClientMountSnapshot,
+    getServerMountSnapshot,
+  );
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
   const [mobileCategoryOpen, setMobileCategoryOpen] = useState("타일");
@@ -206,9 +218,18 @@ export function CommerceHeader() {
           <button type="button" aria-label="내 정보">
             <UserRound size={20} strokeWidth={1.7} />
           </button>
-          <button type="button" aria-label="장바구니">
+          <Link
+            className="header-cart-link"
+            href="/cart"
+            aria-label={`장바구니${mounted && cartHydrated && cartCount > 0 ? `, 상품 ${cartCount}개` : ""}`}
+          >
             <ShoppingBag size={20} strokeWidth={1.7} />
-          </button>
+            {mounted && cartHydrated && cartCount > 0 && (
+              <span aria-hidden="true">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          </Link>
           <button
             ref={mobileMenuButton}
             className="mobile-menu-button"

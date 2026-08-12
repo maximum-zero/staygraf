@@ -20,6 +20,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SelectMenu } from "../../components/SelectMenu";
+import { useCartStore } from "../cart/cart-store";
 import { grafs } from "./sample-data";
 import {
   catalogProducts,
@@ -29,30 +30,14 @@ import {
   type CatalogProduct,
 } from "./catalog-data";
 import { CatalogProductCard } from "./CatalogProductCard";
+import {
+  ADDITIONAL_PRODUCTS,
+  getProductShippingOptions,
+  isShippingMethodId,
+  type AdditionalProduct,
+} from "./purchase-data";
 
 const formatPrice = (price: number) => `${price.toLocaleString("ko-KR")}원`;
-
-type AdditionalProduct = {
-  id: string;
-  name: string;
-  price: number;
-};
-
-const ADDITIONAL_PRODUCTS: AdditionalProduct[] = [
-  { id: "tile-adhesive-20kg", name: "타일 전용 접착제 20kg", price: 15_000 },
-  { id: "tile-grout-2kg", name: "타일 줄눈제 2kg", price: 8_000 },
-  {
-    id: "leveling-spacer-100",
-    name: "타일 레벨링 스페이서 100개입",
-    price: 6_000,
-  },
-];
-
-const SHIPPING_OPTIONS = [
-  { value: "freight-delivery", label: "화물 택배 배송" },
-  { value: "individual-freight", label: "개별 화물 운송" },
-  { value: "pickup", label: "직접 수령" },
-];
 
 export function ProductDetail({
   product,
@@ -61,6 +46,7 @@ export function ProductDetail({
   product: CatalogProduct;
   initialOptionId?: string;
 }) {
+  const shippingOptions = getProductShippingOptions(product);
   const initialOption = product.options.some(
     (option) => option.id === initialOptionId,
   )
@@ -95,6 +81,7 @@ export function ProductDetail({
   const [optionSheetOpen, setOptionSheetOpen] = useState(false);
   const [compactPurchaseVisible, setCompactPurchaseVisible] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const addBundle = useCartStore((state) => state.addBundle);
   const buyboxRef = useRef<HTMLDivElement>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const price = selectedVariant.priceIncludingVat;
@@ -138,6 +125,28 @@ export function ProductDetail({
     setFeedback(message);
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     feedbackTimerRef.current = setTimeout(() => setFeedback(""), 3000);
+  };
+
+  const addCurrentToCart = () => {
+    if (price === null || !isShippingMethodId(shipping)) return;
+    const result = addBundle({
+      productId: product.id,
+      optionId,
+      variantId: selectedVariant.id,
+      quantity,
+      shippingMethod: shipping,
+      unitPriceAtAdd: price,
+      additionalItems: selectedAdditionalProducts.map((item) => ({
+        productId: item.id,
+        quantity: additionalQuantities[item.id],
+        unitPriceAtAdd: item.price,
+      })),
+    });
+    showFeedback(
+      result.merged
+        ? "같은 구성의 장바구니 수량을 합쳤습니다."
+        : "장바구니에 상품을 담았습니다.",
+    );
   };
 
   const shareProduct = async () => {
@@ -386,8 +395,8 @@ export function ProductDetail({
                     추가 상품 <small>(선택)</small>
                   </h2>
                   <HelpTip label="추가 상품 안내">
-                    본품과 별도로 수량과 금액이 계산되며 장바구니에는 별도
-                    상품으로 담깁니다.
+                    본품과 함께 하나의 묶음으로 담기며 수량과 금액은 별도로
+                    계산됩니다.
                   </HelpTip>
                 </div>
                 <AdditionalProductPicker
@@ -412,7 +421,7 @@ export function ProductDetail({
                   ariaLabel="배송 방법"
                   value={shipping}
                   placeholder="배송 방법을 선택해 주세요"
-                  options={SHIPPING_OPTIONS}
+                  options={shippingOptions}
                   onChange={setShipping}
                 />
               </div>
@@ -441,11 +450,7 @@ export function ProductDetail({
                     <button
                       type="button"
                       disabled={!shipping}
-                      onClick={() =>
-                        showFeedback(
-                          "장바구니 기능은 다음 단계에서 연결됩니다.",
-                        )
-                      }
+                      onClick={addCurrentToCart}
                     >
                       장바구니 담기
                     </button>
@@ -484,6 +489,7 @@ export function ProductDetail({
               onAdditionalQuantityChange={changeAdditionalQuantity}
               onAdditionalRemove={removeAdditionalProduct}
               onCalculatorOpen={() => setCalculatorOpen(true)}
+              onAddToCart={addCurrentToCart}
               onFeedback={showFeedback}
             />
           </aside>
@@ -528,6 +534,7 @@ export function ProductDetail({
         onAdditionalAdd={addAdditionalProduct}
         onAdditionalQuantityChange={changeAdditionalQuantity}
         onAdditionalRemove={removeAdditionalProduct}
+        onAddToCart={addCurrentToCart}
         onFeedback={showFeedback}
       />
       <div className="product-mobile-purchase" aria-label="모바일 구매">
@@ -543,7 +550,10 @@ export function ProductDetail({
       </div>
       {feedback && (
         <div className="product-feedback" role="status" aria-live="polite">
-          {feedback}
+          <span>{feedback}</span>
+          {feedback.includes("장바구니") && (
+            <Link href="/cart">장바구니 보기</Link>
+          )}
         </div>
       )}
     </main>
@@ -716,6 +726,7 @@ function CompactPurchasePanel({
   onAdditionalQuantityChange,
   onAdditionalRemove,
   onCalculatorOpen,
+  onAddToCart,
   onFeedback,
 }: {
   visible: boolean;
@@ -736,6 +747,7 @@ function CompactPurchasePanel({
   onAdditionalQuantityChange: (productId: string, quantity: number) => void;
   onAdditionalRemove: (productId: string) => void;
   onCalculatorOpen: () => void;
+  onAddToCart: () => void;
   onFeedback: (message: string) => void;
 }) {
   if (!visible) return null;
@@ -837,7 +849,7 @@ function CompactPurchasePanel({
           ariaLabel="배송 방법"
           value={shipping}
           placeholder="배송 방법을 선택해 주세요"
-          options={SHIPPING_OPTIONS}
+          options={getProductShippingOptions(product)}
           onChange={onShippingChange}
         />
       </div>
@@ -853,13 +865,7 @@ function CompactPurchasePanel({
         </div>
       </div>
       <div className="product-actions">
-        <button
-          type="button"
-          disabled={!shipping}
-          onClick={() =>
-            onFeedback("장바구니 기능은 다음 단계에서 연결됩니다.")
-          }
-        >
+        <button type="button" disabled={!shipping} onClick={onAddToCart}>
           장바구니 담기
         </button>
         <button
@@ -896,6 +902,7 @@ function OptionSheet({
   onAdditionalAdd,
   onAdditionalQuantityChange,
   onAdditionalRemove,
+  onAddToCart,
   onFeedback,
 }: {
   open: boolean;
@@ -919,6 +926,7 @@ function OptionSheet({
   onAdditionalAdd: (productId: string) => void;
   onAdditionalQuantityChange: (productId: string, quantity: number) => void;
   onAdditionalRemove: (productId: string) => void;
+  onAddToCart: () => void;
   onFeedback: (message: string) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -1014,7 +1022,7 @@ function OptionSheet({
           ariaLabel="배송 방법"
           value={shipping}
           placeholder="배송 방법을 선택해 주세요"
-          options={SHIPPING_OPTIONS}
+          options={getProductShippingOptions(product)}
           onChange={onShippingChange}
         />
       </div>
@@ -1034,7 +1042,7 @@ function OptionSheet({
           disabled={!shipping}
           onClick={() => {
             onClose();
-            onFeedback("장바구니 기능은 다음 단계에서 연결됩니다.");
+            onAddToCart();
           }}
         >
           장바구니 담기

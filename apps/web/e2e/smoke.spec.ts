@@ -258,6 +258,85 @@ test("상품 목록에서 카테고리와 필터 조건을 탐색한다", async 
   await expect(page.getByText("4개의 상품")).toBeVisible();
 });
 
+test("상품 상세 구성을 장바구니에 담고 배송 그룹을 변경한다", async ({
+  page,
+}) => {
+  await page.goto("/products/terra-ivory-600");
+
+  await page.getByRole("combobox", { name: "추가 상품 선택" }).click();
+  await page.getByRole("option", { name: /타일 전용 접착제 20kg/ }).click();
+  await page.getByRole("combobox", { name: "배송 방법" }).first().click();
+  await page.getByRole("option", { name: /화물 택배 배송/ }).click();
+  await page.getByRole("button", { name: "장바구니 담기" }).first().click();
+
+  await expect(page.getByText("장바구니에 상품을 담았습니다.")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /장바구니, 상품 1개/ }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("link", { name: /장바구니, 상품 1개/ }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: /장바구니, 상품 1개/ }).click();
+
+  await expect(page).toHaveURL(/\/cart$/);
+  await expect(page.getByRole("heading", { name: "장바구니" })).toBeVisible();
+  await expect(
+    page.getByText("화물 택배 배송", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.getByText("타일 전용 접착제 20kg")).toBeVisible();
+  await expect(page.getByText("선불 배송비")).toBeVisible();
+
+  await page.getByRole("combobox", { name: /배송 방법 변경/ }).click();
+  await page.getByRole("option", { name: /직접 수령/ }).click();
+  await expect(
+    page.getByText("직접 수령", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.getByText("0원", { exact: true }).first()).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "타일 전용 접착제 20kg 삭제" })
+    .click();
+  await expect(
+    page.getByText("타일 전용 접착제 20kg을 삭제했습니다."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /실행 취소/ }).click();
+  await expect(page.getByText("타일 전용 접착제 20kg")).toBeVisible();
+});
+
+test("장바구니는 주요 화면 너비에서 가로로 깨지지 않는다", async ({ page }) => {
+  await page.goto("/products/terra-ivory-600");
+  await page.getByRole("combobox", { name: "배송 방법" }).first().click();
+  await page.getByRole("option", { name: /화물 택배 배송/ }).click();
+  await page.getByRole("button", { name: "장바구니 담기" }).first().click();
+
+  for (const viewport of [
+    { width: 320, height: 844 },
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 1000 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cart", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "장바구니" })).toBeVisible();
+    const overflow = await page.evaluate(() => ({
+      hasOverflow: document.documentElement.scrollWidth > window.innerWidth,
+      offenders: Array.from(document.querySelectorAll<HTMLElement>("body *"))
+        .filter(
+          (element) =>
+            element.getBoundingClientRect().right > window.innerWidth + 1,
+        )
+        .slice(0, 5)
+        .map((element) => `${element.tagName}.${element.className}`),
+    }));
+    expect(
+      overflow.hasOverflow,
+      `${viewport.width}px 가로 스크롤: ${overflow.offenders.join(", ")}`,
+    ).toBe(false);
+  }
+});
+
 test("상품 목록은 주요 화면 너비에서 가로로 깨지지 않는다", async ({
   page,
 }) => {
@@ -528,7 +607,10 @@ test("상품 상세에서 색상·규격·계산 수량과 가격 위계를 확�
   await optionSheet.getByRole("combobox", { name: "배송 방법" }).click();
   await optionSheet.getByRole("option", { name: "화물 택배 배송" }).click();
   await optionSheet.getByRole("button", { name: "장바구니 담기" }).click();
-  await expect(page.getByRole("status")).toContainText("다음 단계에서 연결");
+  await expect(page.getByRole("status")).toContainText(
+    "장바구니에 상품을 담았습니다",
+  );
+  await expect(page.getByRole("link", { name: "장바구니 보기" })).toBeVisible();
 });
 
 test("상품 상세는 주요 화면 너비에서 가로로 깨지지 않는다", async ({

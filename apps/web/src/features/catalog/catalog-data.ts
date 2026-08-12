@@ -30,6 +30,10 @@ export type CatalogProduct = {
   uses: string[];
   styles: string[];
   thicknesses?: string[];
+  shippingMethodIds: Array<
+    "freight-delivery" | "individual-freight" | "pickup"
+  >;
+  freightFee: number;
   createdOrder: number;
 };
 
@@ -171,7 +175,11 @@ const materialOptions: [CatalogOption, ...CatalogOption[]] = [
 
 type CatalogProductSeed = Omit<
   CatalogProduct,
-  "coverMedia" | "defaultOptionId" | "options"
+  | "coverMedia"
+  | "defaultOptionId"
+  | "options"
+  | "shippingMethodIds"
+  | "freightFee"
 > & {
   image: string;
   alt: string;
@@ -421,6 +429,8 @@ export const catalogProducts: CatalogProduct[] = catalogProductSeeds.map(
       ...product,
       defaultOptionId: options[0].id,
       options,
+      shippingMethodIds: ["freight-delivery", "individual-freight", "pickup"],
+      freightFee: product.category === "big-slab" ? 55_000 : 25_000,
     };
   },
 );
