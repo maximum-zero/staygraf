@@ -232,6 +232,12 @@ test("상품 목록에서 카테고리와 필터 조건을 탐색한다", async 
       (options) => options.scrollWidth > options.clientWidth,
     ),
   ).toBe(false);
+  expect(
+    await page
+      .locator(".catalog-card__image")
+      .first()
+      .evaluate((image) => image.getBoundingClientRect().height),
+  ).toBeGreaterThan(100);
 
   await page.getByRole("button", { name: /^필터/ }).click();
   const filter = page.getByRole("dialog", { name: "필터" });
@@ -278,11 +284,21 @@ test("상품 목록은 주요 화면 너비에서 가로로 깨지지 않는다"
     await expect(page.locator("#catalog-title")).toContainText(
       "타일 타일 상품",
     );
+    const overflow = await page.evaluate(() => ({
+      width: window.innerWidth,
+      page: document.documentElement.scrollWidth,
+      offenders: Array.from(document.querySelectorAll<HTMLElement>("body *"))
+        .filter(
+          (element) =>
+            element.getBoundingClientRect().right > window.innerWidth + 1,
+        )
+        .slice(0, 5)
+        .map((element) => `${element.tagName}.${element.className}`),
+    }));
     expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth > window.innerWidth,
-      ),
-    ).toBe(false);
+      overflow.page,
+      `${overflow.width}px: ${overflow.offenders.join(", ")}`,
+    ).toBeLessThanOrEqual(overflow.width);
     await expect
       .poll(() =>
         page
@@ -293,5 +309,275 @@ test("상품 목록은 주요 화면 너비에서 가로로 깨지지 않는다"
           ),
       )
       .toBe(viewport.columns);
+  }
+});
+
+test("상품 상세에서 색상·규격·계산 수량과 가격 위계를 확인한다", async ({
+  page,
+}) => {
+  await page.goto("/products/terra-ivory-600?option=silver");
+
+  await expect(
+    page.getByRole("heading", { name: "트래버틴 아이보리 포세린 타일" }),
+  ).toBeVisible();
+  await expect(page.getByAltText("실버 트래버틴 타일")).toBeVisible();
+  await expect(page.locator(".product-order-price")).toContainText(
+    "1BOX29,000원공급가 26,364원",
+  );
+  await expect(page.locator(".product-unit-prices")).not.toContainText("1㎡");
+  await expect(page.locator(".product-gallery__thumbs button")).toHaveCount(3);
+  await expect(page.locator(".product-total")).toContainText("29,000원");
+  await expect(page.locator(".product-total")).not.toContainText("공급가");
+
+  await page.getByRole("button", { name: /600×1200mm/ }).click();
+  await expect(page.locator(".product-total")).toContainText("34,000원");
+
+  const likeButton = page.getByRole("button", { name: "좋아요", exact: true });
+  await likeButton.click();
+  await expect(
+    page.getByRole("button", { name: "좋아요 취소" }),
+  ).toHaveAttribute("aria-pressed", "true");
+
+  const selectedSize = page.getByRole("button", { name: /600×1200mm/ });
+  await expect(selectedSize).toHaveCSS("color", "rgb(47, 125, 72)");
+
+  await page.getByRole("button", { name: "주문 수량 계산기" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "주문 수량 계산기" }),
+  ).toBeVisible();
+  await page.getByRole("spinbutton", { name: "필요 면적" }).fill("3");
+  await page.getByRole("button", { name: "주문 수량에 적용" }).click();
+  await expect(
+    page.getByRole("spinbutton", { name: "수량 직접 입력" }),
+  ).toHaveValue("3");
+  await expect(page.locator(".product-total")).toContainText("102,000원");
+  await page.getByRole("spinbutton", { name: "수량 직접 입력" }).fill("2");
+  await expect(page.locator(".product-total")).toContainText("68,000원");
+
+  await page.getByRole("button", { name: "포토 리뷰", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "포토 리뷰", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "답변대기 1" }).click();
+  await expect(page.locator(".product-qna")).toHaveCount(1);
+  await expect(page.locator(".product-qna")).toContainText(
+    "영업소 수령 가능한 지역",
+  );
+  await page.getByRole("button", { name: "전체 4" }).click();
+  await expect(page.locator(".product-qna--private")).toHaveCount(2);
+  await expect(page.locator(".product-qna--private").first()).toContainText(
+    "비밀글입니다.",
+  );
+
+  const shipping = page
+    .locator(".product-buybox")
+    .getByRole("combobox", { name: "배송 방법" });
+  await expect(shipping).toContainText("배송 방법을 선택해 주세요");
+  await expect(
+    page
+      .locator(".product-buybox")
+      .getByRole("button", { name: "장바구니 담기" }),
+  ).toBeDisabled();
+  await shipping.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(shipping).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page
+      .locator(".product-buybox")
+      .getByRole("option", { name: "화물 택배 배송" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(shipping).toBeFocused();
+  await expect(shipping).toHaveAttribute("aria-expanded", "false");
+  await shipping.click();
+  await page
+    .locator(".product-buybox")
+    .getByRole("option", { name: "개별 화물 운송" })
+    .click();
+  await expect(shipping).toContainText("개별 화물 운송");
+  await page.getByRole("combobox", { name: "추가 상품 선택" }).click();
+  await page
+    .locator(".product-buybox")
+    .getByRole("option", { name: /타일 전용 접착제 20kg/ })
+    .click();
+  await expect(page.locator(".product-buybox .product-total")).toContainText(
+    "83,000원",
+  );
+  await expect(
+    page.locator(".product-buybox").getByRole("spinbutton", {
+      name: "타일 전용 접착제 20kg 수량 직접 입력",
+    }),
+  ).toHaveValue("1");
+  await page
+    .locator(".product-buybox")
+    .getByRole("combobox", { name: "추가 상품 선택" })
+    .click();
+  await page
+    .locator(".product-buybox")
+    .getByRole("option", { name: /타일 전용 접착제 20kg/ })
+    .click();
+  await expect(
+    page.locator(".product-buybox").getByRole("spinbutton", {
+      name: "타일 전용 접착제 20kg 수량 직접 입력",
+    }),
+  ).toHaveValue("2");
+  await expect(page.locator(".product-buybox .product-total")).toContainText(
+    "98,000원",
+  );
+  await page
+    .locator(".product-buybox")
+    .getByRole("button", { name: "타일 전용 접착제 20kg 삭제" })
+    .click();
+  await expect(page.locator(".product-buybox .product-total")).toContainText(
+    "68,000원",
+  );
+
+  const tabs = page.getByRole("navigation", { name: "상품 상세 항목" });
+  await expect(tabs.getByRole("link")).toHaveText([
+    "상품정보",
+    "배송·교환",
+    "리뷰 12",
+    "Q&A 4",
+  ]);
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/products/terra-ivory-600?option=ivory");
+  await page
+    .locator(".product-buybox")
+    .getByRole("combobox", { name: "배송 방법" })
+    .click();
+  await page
+    .locator(".product-buybox")
+    .getByRole("option", { name: "직접 수령" })
+    .click();
+  await page
+    .locator(".product-buybox")
+    .getByRole("combobox", { name: "추가 상품 선택" })
+    .click();
+  await page
+    .locator(".product-buybox")
+    .getByRole("option", { name: /타일 전용 접착제 20kg/ })
+    .click();
+  const buybox = page.locator(".product-buybox");
+  await expect(buybox).toHaveCSS("position", "static");
+  await expect(page.locator(".product-compact-purchase")).toHaveCount(0);
+  await page
+    .locator("#product-info")
+    .evaluate((element) =>
+      window.scrollTo(
+        0,
+        element.getBoundingClientRect().top + window.scrollY + 220,
+      ),
+    );
+  const compactPurchase = page.locator(".product-compact-purchase");
+  await expect(compactPurchase).toBeVisible();
+  await expect(compactPurchase).not.toContainText(
+    "트래버틴 아이보리 포세린 타일",
+  );
+  await expect(compactPurchase).not.toContainText("공급가");
+  await expect(compactPurchase).toContainText("색상");
+  await expect(compactPurchase).toContainText("규격");
+  await expect(compactPurchase).toContainText("44,000원");
+  await expect(compactPurchase).toContainText("타일 전용 접착제 20kg");
+  await expect(compactPurchase).toContainText("본품 1BOX · 추가 상품 1종");
+  await expect(
+    page
+      .locator(".product-buybox__utilities")
+      .getByRole("button", { name: "좋아요", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".product-buybox__utilities")
+      .getByRole("button", { name: "상품 공유" }),
+  ).toBeVisible();
+  await expect(
+    compactPurchase.getByRole("button", { name: "장바구니 담기" }),
+  ).toBeVisible();
+  await expect(
+    compactPurchase.getByRole("button", { name: "바로 구매" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .getByRole("navigation", { name: "상품 상세 항목" })
+        .evaluate((element) => Math.round(element.getBoundingClientRect().top)),
+    )
+    .toBe(72);
+
+  const headerLeft = await page
+    .locator(".site-header__inner")
+    .evaluate((element) => Math.round(element.getBoundingClientRect().left));
+  const detailLeft = await page
+    .locator(".product-detail__shell")
+    .evaluate((element) => Math.round(element.getBoundingClientRect().left));
+  expect(detailLeft).toBe(headerLeft);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/products/terra-ivory-600?option=ivory");
+  const mobilePurchase = page.locator(".product-mobile-purchase");
+  await expect(mobilePurchase).toHaveCSS("position", "fixed");
+  await mobilePurchase.getByRole("button", { name: "구매하기" }).click();
+  await expect(page.getByRole("dialog", { name: "옵션 선택" })).toBeVisible();
+  const optionSheet = page.getByRole("dialog", { name: "옵션 선택" });
+  await expect(
+    optionSheet.getByRole("button", { name: "장바구니 담기" }),
+  ).toBeDisabled();
+  await expect(
+    optionSheet.getByRole("button", { name: "바로 구매" }),
+  ).toBeVisible();
+  await optionSheet.getByRole("combobox", { name: "배송 방법" }).click();
+  await optionSheet.getByRole("option", { name: "화물 택배 배송" }).click();
+  await optionSheet.getByRole("button", { name: "장바구니 담기" }).click();
+  await expect(page.getByRole("status")).toContainText("다음 단계에서 연결");
+});
+
+test("상품 상세는 주요 화면 너비에서 가로로 깨지지 않는다", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 320, height: 844 },
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 1000 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/products/terra-ivory-600?option=ivory");
+    const overflow = await page.evaluate(() => ({
+      width: window.innerWidth,
+      page: document.documentElement.scrollWidth,
+      body: document.body.scrollWidth,
+      bodyRect: {
+        left: Math.round(document.body.getBoundingClientRect().left),
+        right: Math.round(document.body.getBoundingClientRect().right),
+      },
+      offenders: Array.from(document.querySelectorAll<HTMLElement>("body *"))
+        .filter(
+          (element) =>
+            element.getBoundingClientRect().right > window.innerWidth + 1 ||
+            element.scrollWidth > element.clientWidth + 1,
+        )
+        .reverse()
+        .slice(0, 12)
+        .map((element) => {
+          const bounds = element.getBoundingClientRect();
+          return `${element.tagName}.${element.className}[${Math.round(bounds.left)}..${Math.round(bounds.right)};${element.clientWidth}/${element.scrollWidth}]`;
+        }),
+    }));
+    expect(
+      overflow.page,
+      `${overflow.width}px body=${overflow.body} rect=${JSON.stringify(overflow.bodyRect)}: ${overflow.offenders.join(", ")}`,
+    ).toBeLessThanOrEqual(overflow.width);
+
+    if (viewport.width === 1024) {
+      const actionsBottom = await page
+        .locator(".product-buybox .product-actions")
+        .evaluate((element) => element.getBoundingClientRect().bottom);
+      expect(actionsBottom).toBeLessThanOrEqual(viewport.height);
+    }
+
+    if (viewport.width === 768) {
+      await expect(page.locator(".product-mobile-purchase")).toBeHidden();
+    }
   }
 });

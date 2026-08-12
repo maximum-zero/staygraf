@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import {
   getRepresentativeMedia,
@@ -36,10 +37,11 @@ export function CatalogProductCard({
   );
   const hiddenOptionCount = product.options.length - visibleOptions.length;
   const usesFiveSlotLayout = product.options.length >= 5;
+  const detailHref = `/products/${product.id}?option=${activeOptionId}`;
 
   return (
     <article className="catalog-card">
-      <div className="catalog-card__image">
+      <Link className="catalog-card__image" href={detailHref}>
         {product.badge && (
           <span
             className={`catalog-card__badge catalog-card__badge--${product.badge === "NEW" ? "new" : "md"}`}
@@ -56,7 +58,7 @@ export function CatalogProductCard({
           priority={priority}
           sizes="(max-width: 539px) calc(100vw - 32px), (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
         />
-      </div>
+      </Link>
       <div className="catalog-card__body">
         <div
           className={[
@@ -88,7 +90,9 @@ export function CatalogProductCard({
         <p className="catalog-card__brand">
           {product.brand} · {product.collection}
         </p>
-        <h2 title={product.name}>{product.name}</h2>
+        <h2 title={product.name}>
+          <Link href={detailHref}>{product.name}</Link>
+        </h2>
         <p className="catalog-card__price">{product.price}</p>
       </div>
     </article>

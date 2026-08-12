@@ -33,6 +33,18 @@ export type CatalogProduct = {
   createdOrder: number;
 };
 
+export type CatalogVariant = {
+  id: string;
+  colorOptionId: string;
+  size: string;
+  thickness?: string;
+  orderUnit: "BOX" | "PIECE";
+  piecesPerOrder: number;
+  coveragePerOrder: number;
+  weightPerOrder: number;
+  priceIncludingVat: number | null;
+};
+
 const ivory = "/images/products/travertine-slab-ivory.png";
 const silver = "/images/products/travertine-slab-silver.png";
 const terrazzo = "/images/products/tile-warm-terrazzo.png";
@@ -45,13 +57,20 @@ function createOption(
   label: string,
   src: string,
   alt: string,
+  additionalMedia: Array<{ src: string; alt: string }> = [],
 ): CatalogOption {
   const representativeMediaId = `${id}-representative`;
   return {
     id,
     label,
     representativeMediaId,
-    media: [{ id: representativeMediaId, src, alt }],
+    media: [
+      { id: representativeMediaId, src, alt },
+      ...additionalMedia.map((media, index) => ({
+        id: `${id}-scene-${index + 1}`,
+        ...media,
+      })),
+    ],
   };
 }
 
@@ -62,9 +81,60 @@ export function getRepresentativeMedia(option: CatalogOption) {
   );
 }
 
+export function getCatalogVariants(product: CatalogProduct): CatalogVariant[] {
+  return product.options.flatMap((option) =>
+    product.sizes.map((size, sizeIndex) => {
+      const isSlab = product.category === "big-slab";
+      const piecesPerOrder = isSlab ? 1 : size.includes("1200") ? 2 : 4;
+      const [width = 600, height = 600] = size
+        .split("×")
+        .map((value) => Number.parseInt(value, 10));
+      const coveragePerOrder = Number(
+        ((width * height * piecesPerOrder) / 1_000_000).toFixed(2),
+      );
+      return {
+        id: `${option.id}-${size}`,
+        colorOptionId: option.id,
+        size,
+        thickness: product.thicknesses?.[sizeIndex] ?? product.thicknesses?.[0],
+        orderUnit: isSlab ? "PIECE" : "BOX",
+        piecesPerOrder,
+        coveragePerOrder,
+        weightPerOrder: isSlab ? 74 : 32,
+        priceIncludingVat:
+          product.numericPrice === null
+            ? null
+            : product.numericPrice + sizeIndex * 5_000,
+      } satisfies CatalogVariant;
+    }),
+  );
+}
+
+export function getSupplyPrice(priceIncludingVat: number) {
+  return Math.round(priceIncludingVat / 1.1);
+}
+
 const stoneOptions: [CatalogOption, ...CatalogOption[]] = [
-  createOption("ivory", "아이보리", ivory, "아이보리 트래버틴 타일"),
-  createOption("silver", "실버", silver, "실버 트래버틴 타일"),
+  createOption("ivory", "아이보리", ivory, "아이보리 트래버틴 타일", [
+    {
+      src: "/images/pilots/graf-01-living.png",
+      alt: "아이보리 트래버틴이 시공된 거실",
+    },
+    {
+      src: "/images/pilots/graf-01-living-detail.png",
+      alt: "아이보리 트래버틴 시공 상세",
+    },
+  ]),
+  createOption("silver", "실버", silver, "실버 트래버틴 타일", [
+    {
+      src: "/images/pilots/graf-02-bathroom.png",
+      alt: "실버 톤 타일이 시공된 욕실",
+    },
+    {
+      src: "/images/pilots/graf-02-bathroom-detail.png",
+      alt: "실버 톤 타일 시공 상세",
+    },
+  ]),
 ];
 
 const neutralOptions: [CatalogOption, ...CatalogOption[]] = [
@@ -73,8 +143,26 @@ const neutralOptions: [CatalogOption, ...CatalogOption[]] = [
 ];
 
 const materialOptions: [CatalogOption, ...CatalogOption[]] = [
-  createOption("ivory", "아이보리", ivory, "아이보리 트래버틴 타일"),
-  createOption("silver", "실버", silver, "실버 트래버틴 타일"),
+  createOption("ivory", "아이보리", ivory, "아이보리 트래버틴 타일", [
+    {
+      src: "/images/pilots/graf-01-living.png",
+      alt: "아이보리 트래버틴이 시공된 거실",
+    },
+    {
+      src: "/images/pilots/graf-01-living-detail.png",
+      alt: "아이보리 트래버틴 시공 상세",
+    },
+  ]),
+  createOption("silver", "실버", silver, "실버 트래버틴 타일", [
+    {
+      src: "/images/pilots/graf-02-bathroom.png",
+      alt: "실버 톤 타일이 시공된 욕실",
+    },
+    {
+      src: "/images/pilots/graf-02-bathroom-detail.png",
+      alt: "실버 톤 타일 시공 상세",
+    },
+  ]),
   createOption("greige", "그레이지", greige, "그레이지 콘크리트 타일"),
   createOption("verde", "베르데", green, "베르데 마블 타일"),
   createOption("charcoal", "차콜", black, "차콜 스톤 타일"),
