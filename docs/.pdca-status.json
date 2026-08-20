@@ -1,10 +1,12 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-08-12T15:20:26.629Z",
+  "lastUpdated": "2026-08-19T12:18:58.930Z",
   "activeFeatures": [
     "staygraf-mvp",
     "product-catalog-ui",
-    "cart-ui"
+    "cart-ui",
+    "checkout-ui",
+    "shipping-address-ui"
   ],
   "primaryFeature": "staygraf-mvp",
   "features": {
@@ -125,6 +127,92 @@
         "lastUpdated": "2026-08-12T15:20:26.629Z"
       },
       "completedAt": "2026-08-12T15:20:26.628Z"
+    },
+    "checkout-ui": {
+      "phase": "completed",
+      "matchRate": null,
+      "iterationCount": 1,
+      "documents": {},
+      "taskChain": [
+        {
+          "phase": "plan",
+          "status": "completed",
+          "createdAt": "2026-08-18T14:52:21.588Z",
+          "completedAt": "2026-08-18T15:08:13.298Z"
+        },
+        {
+          "phase": "design",
+          "status": "completed",
+          "createdAt": "2026-08-18T14:52:21.588Z",
+          "completedAt": "2026-08-18T15:34:46.912Z"
+        },
+        {
+          "phase": "do",
+          "status": "completed",
+          "createdAt": "2026-08-18T14:52:21.588Z",
+          "completedAt": "2026-08-18T16:03:57.978Z"
+        },
+        {
+          "phase": "check",
+          "status": "completed",
+          "createdAt": "2026-08-18T14:52:21.588Z",
+          "completedAt": "2026-08-18T16:07:46.658Z"
+        },
+        {
+          "phase": "report",
+          "status": "completed",
+          "createdAt": "2026-08-18T14:52:21.588Z",
+          "completedAt": "2026-08-18T16:08:18.479Z"
+        }
+      ],
+      "timestamps": {
+        "started": "2026-08-18T14:52:21.588Z",
+        "lastUpdated": "2026-08-18T16:08:18.479Z"
+      },
+      "completedAt": "2026-08-18T16:08:18.478Z"
+    },
+    "shipping-address-ui": {
+      "phase": "completed",
+      "matchRate": null,
+      "iterationCount": 1,
+      "documents": {},
+      "taskChain": [
+        {
+          "phase": "plan",
+          "status": "completed",
+          "createdAt": "2026-08-19T11:31:00.898Z",
+          "completedAt": "2026-08-19T11:31:51.914Z"
+        },
+        {
+          "phase": "design",
+          "status": "completed",
+          "createdAt": "2026-08-19T11:31:00.898Z",
+          "completedAt": "2026-08-19T11:33:06.151Z"
+        },
+        {
+          "phase": "do",
+          "status": "completed",
+          "createdAt": "2026-08-19T11:31:00.898Z",
+          "completedAt": "2026-08-19T12:05:24.641Z"
+        },
+        {
+          "phase": "check",
+          "status": "completed",
+          "createdAt": "2026-08-19T11:31:00.898Z",
+          "completedAt": "2026-08-19T12:06:18.268Z"
+        },
+        {
+          "phase": "report",
+          "status": "completed",
+          "createdAt": "2026-08-19T11:31:00.898Z",
+          "completedAt": "2026-08-19T12:18:58.930Z"
+        }
+      ],
+      "timestamps": {
+        "started": "2026-08-19T11:31:00.898Z",
+        "lastUpdated": "2026-08-19T12:18:58.930Z"
+      },
+      "completedAt": "2026-08-19T12:18:58.928Z"
     }
   },
   "pipeline": {
@@ -135,7 +223,7 @@
   "session": {
     "startedAt": "2026-08-07T12:51:09.835Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-08-12T15:20:26.629Z"
+    "lastActivity": "2026-08-19T12:18:58.930Z"
   },
   "history": [
     {
@@ -292,6 +380,162 @@
       "phase": "report",
       "nextPhase": "completed",
       "timestamp": "2026-08-12T15:20:26.628Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "from": "plan",
+      "to": "design",
+      "timestamp": "2026-08-18T15:08:13.297Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "action": "phase_complete",
+      "phase": "plan",
+      "nextPhase": "design",
+      "timestamp": "2026-08-18T15:08:13.298Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "from": "design",
+      "to": "design",
+      "timestamp": "2026-08-18T15:30:27.703Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "from": "design",
+      "to": "do",
+      "timestamp": "2026-08-18T15:34:46.910Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "action": "phase_complete",
+      "phase": "design",
+      "nextPhase": "do",
+      "timestamp": "2026-08-18T15:34:46.911Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "from": "do",
+      "to": "check",
+      "timestamp": "2026-08-18T16:03:57.976Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "action": "phase_complete",
+      "phase": "do",
+      "nextPhase": "check",
+      "timestamp": "2026-08-18T16:03:57.978Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "from": "check",
+      "to": "act",
+      "timestamp": "2026-08-18T16:07:46.657Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "action": "phase_complete",
+      "phase": "check",
+      "nextPhase": "act",
+      "timestamp": "2026-08-18T16:07:46.658Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "from": "act",
+      "to": "report",
+      "timestamp": "2026-08-18T16:07:46.661Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "action": "phase_complete",
+      "phase": "act",
+      "nextPhase": "report",
+      "timestamp": "2026-08-18T16:07:46.662Z"
+    },
+    {
+      "feature": "checkout-ui",
+      "action": "phase_complete",
+      "phase": "report",
+      "nextPhase": "completed",
+      "timestamp": "2026-08-18T16:08:18.478Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "from": "plan",
+      "to": "design",
+      "timestamp": "2026-08-19T11:31:51.913Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "action": "phase_complete",
+      "phase": "plan",
+      "nextPhase": "design",
+      "timestamp": "2026-08-19T11:31:51.913Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "from": "design",
+      "to": "design",
+      "timestamp": "2026-08-19T11:32:01.022Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "from": "design",
+      "to": "do",
+      "timestamp": "2026-08-19T11:33:06.150Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "action": "phase_complete",
+      "phase": "design",
+      "nextPhase": "do",
+      "timestamp": "2026-08-19T11:33:06.151Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "from": "do",
+      "to": "check",
+      "timestamp": "2026-08-19T12:05:24.640Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "action": "phase_complete",
+      "phase": "do",
+      "nextPhase": "check",
+      "timestamp": "2026-08-19T12:05:24.640Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "from": "check",
+      "to": "act",
+      "timestamp": "2026-08-19T12:06:18.267Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "action": "phase_complete",
+      "phase": "check",
+      "nextPhase": "act",
+      "timestamp": "2026-08-19T12:06:18.267Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "from": "act",
+      "to": "report",
+      "timestamp": "2026-08-19T12:06:18.273Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "action": "phase_complete",
+      "phase": "act",
+      "nextPhase": "report",
+      "timestamp": "2026-08-19T12:06:18.273Z"
+    },
+    {
+      "feature": "shipping-address-ui",
+      "action": "phase_complete",
+      "phase": "report",
+      "nextPhase": "completed",
+      "timestamp": "2026-08-19T12:18:58.929Z"
     }
   ]
 }
