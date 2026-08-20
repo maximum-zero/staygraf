@@ -1,5 +1,6 @@
 "use client";
 
+import { clsx } from "clsx";
 import {
   ChevronRight,
   Minus,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useEffect,
   useMemo,
@@ -33,6 +35,9 @@ import {
   getShippingMethod,
   type ShippingMethodId,
 } from "../catalog/purchase-data";
+import { useAuthStore } from "../auth/auth-store";
+import { getCheckoutEntryPrices } from "../checkout/checkout-data";
+import { useCheckoutStore } from "../checkout/checkout-store";
 
 const formatPrice = (price: number) => `${price.toLocaleString("ko-KR")}원`;
 const subscribeToMount = () => () => undefined;
@@ -49,6 +54,7 @@ type UndoState =
     };
 
 export function CartPage() {
+  const router = useRouter();
   const bundles = useCartStore((state) => state.bundles);
   const hydrated = useCartStore((state) => state.hydrated);
   const setBundleSelected = useCartStore((state) => state.setBundleSelected);
@@ -64,6 +70,8 @@ export function CartPage() {
   const removeBundle = useCartStore((state) => state.removeBundle);
   const removeBundles = useCartStore((state) => state.removeBundles);
   const restoreBundle = useCartStore((state) => state.restoreBundle);
+  const member = useAuthStore((state) => state.member);
+  const beginDraft = useCheckoutStore((state) => state.beginDraft);
   const [undo, setUndo] = useState<UndoState | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -144,11 +152,15 @@ export function CartPage() {
       setFeedback("구매 조건이 변경된 상품을 먼저 확인해 주세요.");
       return;
     }
-    setFeedback(
-      action === "quote"
-        ? "견적 정보 입력 화면은 다음 단계에서 연결됩니다."
-        : "선택 상품 주문은 로그인 후 이용할 수 있습니다.",
+    if (action === "quote") {
+      setFeedback("견적 정보 입력 화면은 다음 단계에서 연결됩니다.");
+      return;
+    }
+    beginDraft(
+      currentResolved.map((item) => item.bundle.id),
+      getCheckoutEntryPrices(currentResolved),
     );
+    router.push(member ? "/checkout" : "/login?returnTo=/checkout");
   };
 
   if (!mounted || !hydrated) {
@@ -394,7 +406,7 @@ function CartBundleCard({
     : method.summary;
   return (
     <article
-      className={`cart-bundle${!item.available ? "is-unavailable" : ""}`}
+      className={clsx("cart-bundle", !item.available && "is-unavailable")}
     >
       <div className="cart-bundle__main">
         <CartCheckbox

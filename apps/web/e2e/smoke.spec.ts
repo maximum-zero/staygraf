@@ -337,6 +337,213 @@ test("장바구니는 주요 화면 너비에서 가로로 깨지지 않는다",
   }
 });
 
+test("선택 장바구니를 모의 로그인 후 주문 완료한다", async ({ page }) => {
+  await page.goto("/products/terra-ivory-600");
+  await page.getByRole("combobox", { name: "배송 방법" }).first().click();
+  await page.getByRole("option", { name: /직접 수령/ }).click();
+  await page.getByRole("button", { name: "장바구니 담기" }).first().click();
+  await page.getByRole("link", { name: /장바구니, 상품 1개/ }).click();
+  await page.getByRole("button", { name: "선택 상품 주문" }).click();
+
+  await expect(page).toHaveURL(
+    /\/login\?returnTo=%2Fcheckout|\/login\?returnTo=\/checkout/,
+  );
+  await page.getByRole("button", { name: "데모 계정 입력" }).click();
+  await page.getByRole("button", { name: "로그인하고 주문 계속하기" }).click();
+  await expect(page).toHaveURL(/\/checkout$/);
+  await expect(
+    page.getByRole("heading", { name: "주문·결제", exact: true }).last(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("직접 수령", { exact: true }).first(),
+  ).toBeVisible();
+  const agreement = page.getByLabel(/주문 상품, 가격과 결제 조건/);
+  await page
+    .getByRole("button", { name: /결제하기$/ })
+    .last()
+    .click();
+  await expect(agreement).toBeFocused();
+  await expect(
+    page.getByText("주문 내용과 결제 조건에 동의해 주세요."),
+  ).toBeVisible();
+  await agreement.check();
+  await page
+    .getByRole("button", { name: /결제하기$/ })
+    .last()
+    .click();
+
+  await expect(page).toHaveURL(/\/orders\/.+\/complete$/);
+  await expect(
+    page.getByRole("heading", { name: "주문이 완료되었습니다." }),
+  ).toBeVisible();
+  await expect(page.getByText(/주문번호 SG-/)).toBeVisible();
+});
+
+test("배송지를 검색해 저장하고 주문서에 적용한다", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "kakao", {
+      configurable: true,
+      value: {
+        Postcode: class {
+          private readonly options: {
+            oncomplete: (data: {
+              zonecode: string;
+              roadAddress: string;
+            }) => void;
+          };
+
+          constructor(options: {
+            oncomplete: (data: {
+              zonecode: string;
+              roadAddress: string;
+            }) => void;
+          }) {
+            this.options = options;
+          }
+
+          open() {
+            this.options.oncomplete({
+              zonecode: "06236",
+              roadAddress: "서울특별시 강남구 테헤란로 1",
+            });
+          }
+        },
+      },
+    });
+  });
+
+  await page.goto("/products/terra-ivory-600");
+  await page.getByRole("combobox", { name: "배송 방법" }).first().click();
+  await page.getByRole("option", { name: /화물 택배 배송/ }).click();
+  await page.getByRole("button", { name: "장바구니 담기" }).first().click();
+  await page.getByRole("link", { name: /장바구니, 상품 1개/ }).click();
+  await page.getByRole("button", { name: "선택 상품 주문" }).click();
+  await page.getByRole("button", { name: "데모 계정 입력" }).click();
+  await page.getByRole("button", { name: "로그인하고 주문 계속하기" }).click();
+
+  await page.getByLabel(/주문 상품, 가격과 결제 조건/).check();
+  await page
+    .getByRole("button", { name: /결제하기$/ })
+    .last()
+    .click();
+  await expect(page.getByRole("button", { name: "배송지 입력" })).toBeFocused();
+  await expect(page.getByText("배송지를 입력해 주세요.")).toBeVisible();
+  await page.getByRole("button", { name: "배송지 입력" }).click();
+  let dialog = page.getByRole("dialog", { name: "배송지 추가" });
+  await expect(dialog).toBeVisible();
+  const addressLabel = dialog.getByLabel("배송지명");
+  await addressLabel.focus();
+  await addressLabel.blur();
+  await expect(addressLabel).toHaveAttribute("aria-invalid", "true");
+  await expect(addressLabel.locator("..")).toHaveClass(
+    /address-editor__field has-error/,
+  );
+  await expect(dialog.getByRole("alert")).toHaveText(
+    "배송지명을 입력해 주세요.",
+  );
+  await addressLabel.fill("우리 집");
+  await dialog.getByRole("button", { name: "배송지 관리 닫기" }).click();
+  const discardDialog = page.getByRole("alertdialog", {
+    name: "작성 중인 내용이 있습니다.",
+  });
+  await expect(discardDialog).toBeVisible();
+  await expect(
+    discardDialog.getByRole("button", { name: "계속 작성" }),
+  ).toBeFocused();
+  await discardDialog.getByRole("button", { name: "계속 작성" }).click();
+  await expect(addressLabel).toHaveValue("우리 집");
+  await dialog.getByLabel("수령인").fill("김스테이");
+  await dialog.getByLabel("연락처").fill("01012345678");
+  await dialog.getByRole("button", { name: "주소 검색" }).click();
+  await expect(dialog.getByLabel("우편번호")).toHaveValue("06236");
+  await expect(dialog.getByLabel("도로명 주소")).toHaveValue(
+    "서울특별시 강남구 테헤란로 1",
+  );
+  await dialog.getByLabel("상세주소").fill("101호");
+  await dialog.getByRole("button", { name: "배송지 저장" }).click();
+
+  dialog = page.getByRole("dialog", { name: "배송지 관리" });
+  await expect(dialog.getByText(/주문서에 적용했습니다/)).toBeVisible();
+  await dialog.getByRole("button", { name: "배송지 관리 닫기" }).click();
+  const shippingRegion = page.getByRole("region", { name: "배송지 정보" });
+  await expect(shippingRegion).toContainText("우리 집");
+  await expect(shippingRegion).toContainText(
+    "서울특별시 강남구 테헤란로 1 101호",
+  );
+
+  await page.reload();
+  await expect(page.getByRole("region", { name: "배송지 정보" })).toContainText(
+    "우리 집",
+  );
+  await page.getByRole("button", { name: "변경", exact: true }).click();
+  dialog = page.getByRole("dialog", { name: "배송지 관리" });
+  await expect(
+    dialog.locator(".address-card__select").filter({ hasText: "우리 집" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await dialog.getByRole("button", { name: "우리 집 삭제" }).click();
+  await expect(
+    dialog.getByText("우리 집 배송지를 삭제했습니다."),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "실행 취소" }).click();
+  await expect(dialog.getByText("삭제한 배송지를 복구했습니다.")).toBeVisible();
+});
+
+test("체크아웃 화면은 주요 너비에서 가로로 깨지지 않는다", async ({ page }) => {
+  await page.goto("/products/terra-ivory-600");
+  await page.getByRole("combobox", { name: "배송 방법" }).first().click();
+  await page.getByRole("option", { name: /화물 택배 배송/ }).click();
+  await page.getByRole("button", { name: "장바구니 담기" }).first().click();
+  await page.getByRole("link", { name: /장바구니, 상품 1개/ }).click();
+  await page.getByRole("button", { name: "선택 상품 주문" }).click();
+  await page.getByRole("button", { name: "데모 계정 입력" }).click();
+  await page.getByRole("button", { name: "로그인하고 주문 계속하기" }).click();
+
+  for (const viewport of [
+    { width: 320, height: 844 },
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 1000 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/checkout", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#checkout-form")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth,
+      ),
+      `${viewport.width}px 체크아웃 가로 스크롤`,
+    ).toBe(false);
+    await page.getByRole("button", { name: "배송지 입력" }).click();
+    const dialog = page.getByRole("dialog", { name: "배송지 추가" });
+    await expect(dialog).toBeVisible();
+    await dialog.evaluate((element) =>
+      Promise.all(
+        element
+          .getAnimations({ subtree: true })
+          .map((animation) => animation.finished),
+      ),
+    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth,
+      ),
+      `${viewport.width}px 배송지 관리 가로 스크롤`,
+    ).toBe(false);
+    const targets = await dialog.locator("button").evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      }),
+    );
+    expect(
+      targets.every(({ width, height }) => width >= 44 && height >= 44),
+      `${viewport.width}px 배송지 관리 44px 조작 영역: ${JSON.stringify(targets)}`,
+    ).toBe(true);
+    await dialog.getByRole("button", { name: "배송지 관리 닫기" }).click();
+  }
+});
+
 test("상품 목록은 주요 화면 너비에서 가로로 깨지지 않는다", async ({
   page,
 }) => {
