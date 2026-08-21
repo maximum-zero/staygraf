@@ -349,7 +349,7 @@ test("선택 장바구니를 모의 로그인 후 주문 완료한다", async ({
     /\/login\?returnTo=%2Fcheckout|\/login\?returnTo=\/checkout/,
   );
   await page.getByRole("button", { name: "데모 계정 입력" }).click();
-  await page.getByRole("button", { name: "로그인하고 주문 계속하기" }).click();
+  await page.getByRole("button", { name: "로그인하고 계속하기" }).click();
   await expect(page).toHaveURL(/\/checkout$/);
   await expect(
     page.getByRole("heading", { name: "주문·결제", exact: true }).last(),
@@ -419,7 +419,7 @@ test("배송지를 검색해 저장하고 주문서에 적용한다", async ({ p
   await page.getByRole("link", { name: /장바구니, 상품 1개/ }).click();
   await page.getByRole("button", { name: "선택 상품 주문" }).click();
   await page.getByRole("button", { name: "데모 계정 입력" }).click();
-  await page.getByRole("button", { name: "로그인하고 주문 계속하기" }).click();
+  await page.getByRole("button", { name: "로그인하고 계속하기" }).click();
 
   await page.getByLabel(/주문 상품, 가격과 결제 조건/).check();
   await page
@@ -496,7 +496,7 @@ test("체크아웃 화면은 주요 너비에서 가로로 깨지지 않는다",
   await page.getByRole("link", { name: /장바구니, 상품 1개/ }).click();
   await page.getByRole("button", { name: "선택 상품 주문" }).click();
   await page.getByRole("button", { name: "데모 계정 입력" }).click();
-  await page.getByRole("button", { name: "로그인하고 주문 계속하기" }).click();
+  await page.getByRole("button", { name: "로그인하고 계속하기" }).click();
 
   for (const viewport of [
     { width: 320, height: 844 },

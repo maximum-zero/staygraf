@@ -25,6 +25,9 @@ export type ResolvedCartBundle = {
   optionLabel: string;
   variantLabel: string;
   orderUnitLabel: string;
+  piecesPerOrder: number | null;
+  coveragePerOrder: number | null;
+  weightPerOrder: number | null;
   image: string;
   imageAlt: string;
   currentUnitPrice: number | null;
@@ -83,6 +86,9 @@ export function resolveCartBundle(bundle: CartBundle): ResolvedCartBundle {
       ? `${variant.size}mm${variant.thickness ? ` · ${variant.thickness}` : ""}`
       : "선택 규격 종료",
     orderUnitLabel: variant?.orderUnit === "BOX" ? "BOX" : "장",
+    piecesPerOrder: variant?.piecesPerOrder ?? null,
+    coveragePerOrder: variant?.coveragePerOrder ?? null,
+    weightPerOrder: variant?.weightPerOrder ?? null,
     image:
       media?.src ??
       product?.coverMedia?.src ??

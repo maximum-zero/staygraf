@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { SHOP_CATEGORIES } from "@/features/catalog/category-tree";
 import { useCartStore } from "@/features/cart/cart-store";
+import { useAuthStore } from "@/features/auth/auth-store";
 
 const subscribeToMount = () => () => undefined;
 const getClientMountSnapshot = () => true;
@@ -23,6 +24,8 @@ export function CommerceHeader() {
   const pathname = usePathname();
   const cartCount = useCartStore((state) => state.bundles.length);
   const cartHydrated = useCartStore((state) => state.hydrated);
+  const member = useAuthStore((state) => state.member);
+  const authHydrated = useAuthStore((state) => state.hydrated);
   const [isShopOpen, setIsShopOpen] = useState(false);
   const mounted = useSyncExternalStore(
     subscribeToMount,
@@ -215,9 +218,17 @@ export function CommerceHeader() {
           <button type="button" aria-label="검색">
             <Search size={20} strokeWidth={1.7} />
           </button>
-          <button type="button" aria-label="내 정보">
+          <Link
+            className="header-user-link"
+            href={
+              mounted && authHydrated && member
+                ? "/mypage/quotes"
+                : "/login?returnTo=/mypage/quotes"
+            }
+            aria-label="내 정보"
+          >
             <UserRound size={20} strokeWidth={1.7} />
-          </button>
+          </Link>
           <Link
             className="header-cart-link"
             href="/cart"

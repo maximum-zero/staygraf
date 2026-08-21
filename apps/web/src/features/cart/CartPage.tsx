@@ -38,6 +38,8 @@ import {
 import { useAuthStore } from "../auth/auth-store";
 import { getCheckoutEntryPrices } from "../checkout/checkout-data";
 import { useCheckoutStore } from "../checkout/checkout-store";
+import { createQuotationEntrySnapshot } from "../quotations/quotation-data";
+import { useQuotationDraftStore } from "../quotations/quotation-draft-store";
 
 const formatPrice = (price: number) => `${price.toLocaleString("ko-KR")}원`;
 const subscribeToMount = () => () => undefined;
@@ -72,6 +74,9 @@ export function CartPage() {
   const restoreBundle = useCartStore((state) => state.restoreBundle);
   const member = useAuthStore((state) => state.member);
   const beginDraft = useCheckoutStore((state) => state.beginDraft);
+  const beginQuotationDraft = useQuotationDraftStore(
+    (state) => state.beginDraft,
+  );
   const [undo, setUndo] = useState<UndoState | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -153,7 +158,12 @@ export function CartPage() {
       return;
     }
     if (action === "quote") {
-      setFeedback("견적 정보 입력 화면은 다음 단계에서 연결됩니다.");
+      beginQuotationDraft(
+        currentResolved.map((item) => item.bundle.id),
+        createQuotationEntrySnapshot(currentResolved),
+        member?.id ?? null,
+      );
+      router.push(member ? "/quotes/new" : "/login?returnTo=/quotes/new");
       return;
     }
     beginDraft(

@@ -1,7 +1,15 @@
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
-export function CheckoutHeader({ backHref = "/cart" }: { backHref?: string }) {
+export function CheckoutHeader({
+  backHref = "/cart",
+  title = "주문·결제",
+  backLabel = "장바구니로 돌아가기",
+}: {
+  backHref?: string;
+  title?: string;
+  backLabel?: string;
+}) {
   return (
     <header className="checkout-header">
       <div className="checkout-header__inner">
@@ -12,10 +20,10 @@ export function CheckoutHeader({ backHref = "/cart" }: { backHref?: string }) {
         >
           STAYGRAF
         </Link>
-        <strong>주문·결제</strong>
+        <strong>{title}</strong>
         <Link className="checkout-header__back" href={backHref}>
           <ChevronLeft size={18} aria-hidden="true" />
-          <span>장바구니로 돌아가기</span>
+          <span>{backLabel}</span>
         </Link>
       </div>
     </header>

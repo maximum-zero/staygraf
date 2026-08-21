@@ -5,7 +5,7 @@ import { MockLoginPage } from "@/features/auth/MockLoginPage";
 export default function LoginRoute() {
   return (
     <>
-      <CheckoutHeader />
+      <CheckoutHeader title="로그인" />
       <Suspense
         fallback={
           <main className="login-page">

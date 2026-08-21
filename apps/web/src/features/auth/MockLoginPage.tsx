@@ -46,7 +46,7 @@ export function MockLoginPage() {
       <section className="login-card" aria-labelledby="login-title">
         <div className="login-card__heading">
           <h1 id="login-title">로그인</h1>
-          <p>주문을 계속하려면 화면 검증용 계정으로 로그인해 주세요.</p>
+          <p>주문과 견적서 기능은 화면 검증용 계정으로 이용할 수 있습니다.</p>
         </div>
         <form
           noValidate
@@ -108,7 +108,7 @@ export function MockLoginPage() {
             데모 계정 입력
           </button>
           <button className="checkout-primary-button" type="submit">
-            로그인하고 주문 계속하기
+            로그인하고 계속하기
           </button>
           <small>실제 계정이나 결제정보는 사용하지 않습니다.</small>
         </form>
